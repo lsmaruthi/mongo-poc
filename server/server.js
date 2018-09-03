@@ -1,4 +1,5 @@
 var mongoose = require('./db/mongoose-db');
+var {ObjectID} = require('mongodb');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
 
@@ -26,6 +27,17 @@ app.get('/todos', (req, res) => {
 	}, (err) => {
 		res.status(400).send(err);
 	})
+})
+
+app.get('/todos/:id', (req, res) => {
+	var id = req.params.id;
+	if(!ObjectID.isValid(id))
+		res.status(404).send({});
+	Todo.findById({_id: id}).then((todo) => {
+		if(!todo)
+			res.status(404).send({})
+		res.send({todo});
+	}).catch((e) => res.status(400).send({data: e}))
 })
 
 app.listen(3000, () => {
