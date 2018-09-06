@@ -3,6 +3,7 @@ const _ = require('lodash');
 var {ObjectID} = require('mongodb');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
+var {authenticate}= require('./middleware/authenticate');
 
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -74,6 +75,27 @@ app.patch('/todos/:id', (req, res) => {
 			return res.status(404).send({});
 		res.send({todo})
 	})
+})
+
+app.post('/users', (req, res) => {
+	var userObj = _.pick(req.body, ['email', 'age', 'password'])
+	var newUser = new User({
+		email: userObj.email,
+		age: userObj.age,
+		password: userObj.password
+	})
+
+	newUser.save().then(() => {
+		return newUser.generateAuthToken();		
+	}).then((token) => {
+		res.header('x-auth', token).send(newUser);
+	}).catch((e) => {
+		res.status(401).send(e);
+	})
+})
+
+app.get('/users/me', authenticate, (req, res) => {
+	res.send(req.user)
 })
 
 app.listen(port, () => {
